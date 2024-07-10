@@ -1,0 +1,110 @@
+import tkinter as tk
+from tkinter import messagebox, simpledialog
+import json
+
+class ContactManager:
+    def __init__(self, master):
+        self.master = master
+        self.master.title("Contact Manager")
+        self.master.geometry("500x300")
+        
+        self.contacts = []
+        
+        self.load_contacts()  
+        
+        self.main_frame = tk.Frame(self.master, bg='#F0FFFF')
+        self.main_frame.pack(fill=tk.BOTH, expand=True)
+        
+        self.listbox = tk.Listbox(self.main_frame, width=50, height=10, bg='#ffffff')
+        self.listbox.pack(pady=10)
+        
+        self.refresh_listbox()
+        
+        add_button = tk.Button(self.main_frame, text="Add Contact", command=self.add_contact, bg='#FFC0CB')
+        add_button.pack(side=tk.LEFT, padx=10)
+        
+        edit_button = tk.Button(self.main_frame, text="Edit Contact", command=self.edit_contact, bg='#FFC0CB')
+        edit_button.pack(side=tk.LEFT, padx=10)
+        
+        view_button = tk.Button(self.main_frame, text="View Contact", command=self.view_contact, bg='#FFC0CB')
+        view_button.pack(side=tk.LEFT, padx=10)
+
+        delete_button = tk.Button(self.main_frame, text="Delete Contact", command=self.delete_contact, bg='#FFFAFA')
+        delete_button.pack(side=tk.LEFT, padx=10)
+
+        exit_button = tk.Button(self.main_frame, text="Exit", command=self.master.quit, bg='#FFFAFA')
+        exit_button.pack(side=tk.LEFT, padx=10)
+    
+    def refresh_listbox(self):
+        self.listbox.delete(0, tk.END)
+        for contact in self.contacts:
+            self.listbox.insert(tk.END, contact['name'])
+    
+    def add_contact(self):
+        name = simpledialog.askstring("Add Contact", "Enter Name:")
+        if name:
+            phone = simpledialog.askstring("Add Contact", f"Enter Phone Number for {name}:")
+            email = simpledialog.askstring("Add Contact", f"Enter Email for {name}:")
+            
+            contact = {'name': name, 'phone': phone, 'email': email}
+            self.contacts.append(contact)
+            self.refresh_listbox()
+            messagebox.showinfo("Contact Added", f"{name}'s contact added successfully!")
+    
+    def edit_contact(self):
+        selected_index = self.listbox.curselection()
+        if selected_index:
+            index = selected_index[0]
+            contact = self.contacts[index]
+            
+            new_name = simpledialog.askstring("Edit Contact", "Enter New Name:", initialvalue=contact['name'])
+            if new_name:
+                new_phone = simpledialog.askstring("Edit Contact", f"Enter New Phone Number for {new_name}:", initialvalue=contact['phone'])
+                new_email = simpledialog.askstring("Edit Contact", f"Enter New Email for {new_name}:", initialvalue=contact['email'])
+                
+                updated_contact = {'name': new_name, 'phone': new_phone, 'email': new_email}
+                self.contacts[index] = updated_contact
+                self.refresh_listbox()
+                messagebox.showinfo("Contact Updated", f"{contact['name']}'s contact updated successfully!")
+        else:
+            messagebox.showwarning("No Selection", "Please select a contact to edit.")
+    
+    def delete_contact(self):
+        selected_index = self.listbox.curselection()
+        if selected_index:
+            index = selected_index[0]
+            contact = self.contacts[index]
+            
+            confirm = messagebox.askyesno("Delete Contact", f"Are you sure you want to delete {contact['name']}'s contact?")
+            if confirm:
+                del self.contacts[index]
+                self.refresh_listbox()
+                messagebox.showinfo("Contact Deleted", f"{contact['name']}'s contact deleted successfully!")
+        else:
+            messagebox.showwarning("No Selection", "Please select a contact to delete.")
+    
+    def view_contact(self):
+        selected_index = self.listbox.curselection()
+        if selected_index:
+            index = selected_index[0]
+            contact = self.contacts[index]
+            messagebox.showinfo("Contact Details", f"Name: {contact['name']}\nPhone: {contact['phone']}\nEmail: {contact['email']}")
+        else:
+            messagebox.showwarning("No Selection", "Please select a contact to view.")
+    
+    def save_contacts(self):
+        with open('contacts.json', 'w') as f:
+            json.dump(self.contacts, f, indent=4)
+        messagebox.showinfo("Contacts Saved", "Contacts have been saved to contacts.json file.")
+    
+    def load_contacts(self):
+        try:
+            with open('contacts.json', 'r') as f:
+                self.contacts = json.load(f)
+        except FileNotFoundError:
+            messagebox.showwarning("File Not Found", "No contacts file found. Starting with an empty contact list.")
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    contact_manager = ContactManager(root)
+    root.mainloop()
